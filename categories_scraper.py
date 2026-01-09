@@ -1,34 +1,38 @@
 import re
 from json import dump
-from pydoll.browser.tab import Tab
+from bs4 import BeautifulSoup
+from requests import get
 
 
-async def get_category_title(tag):
-    title = await (await tag.find(class_name="k-item-text")).text
+def get_categories_json(base_url: str):
+    categories = {}
+
+    response = get(base_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    side_menu = soup.find("div", class_="modern-menu-items")
+    categories_tags = side_menu.find_all("div", class_="modern-menu-item")
+
+    for item in categories_tags:
+        title = get_category_title(item)
+        links = get_category_links(item)
+
+        categories[title] = links
+
+    with open("categories.json", "w") as f:
+        dump(categories, f, indent=2)
+
+
+def get_category_title(item):
+    title = item.find("span", class_="modern-menu-item-text").string
     title = re.sub(r'\s*[^a-zA-Z0-9]+\s*$', '', title)
-    title = title.lower()
 
     return title
 
 
-async def get_category_items(tag):
-    result = []
-    children = await tag.find(class_name="k-item-text", find_all=True)
-    for child in children:
-        result.append(child.get_attribute('href'))
-    return result
+def get_category_links(item):
+    link_tags = item.next_sibling.next_sibling.find_all("a")
+    links = []
+    for tag in link_tags:
+        links.append(tag["href"])
 
-
-async def get_categories_json(tab: Tab, base_url: str):
-    categories = {}
-    await tab.go_to(base_url)
-    side_menu = await tab.find(id='menu-list')
-    tags = await side_menu.get_children_elements()
-
-    for i in range(0, len(tags), 2):
-        category_title = await get_category_title(tags[i])
-        category_items = await get_category_items(tags[i + 1])
-        categories[category_title] = category_items
-
-    with open("categories.json", "w") as f:
-        dump(categories, f, indent=2)
+    return links

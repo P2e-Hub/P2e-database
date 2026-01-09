@@ -1,28 +1,28 @@
-import asyncio
 from json import load
 from os import path
-from pydoll.browser.chromium import Chrome
-from pydoll.browser.tab import Tab
 from categories_scraper import get_categories_json
+from selenium import webdriver
 
 base_url = "https://2e.aonprd.com"
 
 
-async def get_feats(tab: Tab, url: str):
-    await tab.go_to(base_url + url)
+async def get_feats(url: str):
+    pass
 
 
-async def main():
-    async with Chrome() as browser:
-        tab = await browser.start()
-        if not path.isfile("categories.json"):
-            await get_categories_json(tab, base_url=base_url)
+def main():
+    options = webdriver.FirefoxOptions()
+    options.add_argument("-headless")
+    driver = webdriver.Firefox(options=options)
 
-        json_file = open("categories.json")
-        json = load(json_file)
+    if not path.isfile("categories.json"):
+        get_categories_json(base_url=base_url)
 
-        await get_feats(tab, json["feats"][0])
+    json_file = open("categories.json")
+    categories = load(json_file)
+
+    driver.quit()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

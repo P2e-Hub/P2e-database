@@ -1,10 +1,12 @@
 import re
 from json import dump
+from typing import List
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from requests import get
 
 
-def get_categories_json(base_url: str):
+def get_categories_json(base_url: str) -> None:
     categories = {}
 
     response = get(base_url)
@@ -22,14 +24,14 @@ def get_categories_json(base_url: str):
         dump(categories, f, indent=2)
 
 
-def get_category_title(item):
+def get_category_title(item: Tag) -> str:
     title = item.find("span", class_="modern-menu-item-text").string
     title = re.sub(r'\s*[^a-zA-Z0-9]+\s*$', '', title)
 
     return title
 
 
-def get_category_links(item):
+def get_category_links(item: Tag) -> List[str]:
     link_tags = item.next_sibling.next_sibling.find_all("a")
     links = []
     for tag in link_tags:

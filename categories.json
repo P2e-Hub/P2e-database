@@ -1,0 +1,71 @@
+{
+  "Character Creation": [
+    "/Ancestries.aspx",
+    "/Archetypes.aspx",
+    "/Backgrounds.aspx",
+    "/Classes.aspx",
+    "/Skills.aspx"
+  ],
+  "Equipment": [
+    "/Equipment.aspx",
+    "/Equipment.aspx?Category=1",
+    "/Equipment.aspx?Category=6",
+    "/Armor.aspx",
+    "/Equipment.aspx?Category=21",
+    "/Equipment.aspx?Category=23",
+    "/Shields.aspx",
+    "/Weapons.aspx",
+    "/Equipment.aspx?Category=41"
+  ],
+  "Feats": [
+    "/Feats.aspx",
+    "/Feats.aspx?Traits=78",
+    "/Feats.aspx?Traits=78&NoSkills=True",
+    "/Feats.aspx?Traits=144"
+  ],
+  "Game Mastery": [
+    "/Afflictions.aspx",
+    "/Creatures.aspx",
+    "/Hazards.aspx"
+  ],
+  "Rules": [
+    "/Rules.aspx",
+    "/Actions.aspx",
+    "/Conditions.aspx",
+    "/GMScreen.aspx",
+    "/PlayersGuide.aspx",
+    "/Traits.aspx",
+    "/Sources.aspx"
+  ],
+  "Setting": [
+    "/Setting.aspx?Adventure=true",
+    "/Articles.aspx",
+    "/Deities.aspx",
+    "/Domains.aspx",
+    "/Languages.aspx",
+    "/Planes.aspx",
+    "/Setting.aspx?Scenario=true"
+  ],
+  "Spells/Rituals": [
+    "/Spells.aspx",
+    "/Spells.aspx?Tradition=1",
+    "/Spells.aspx?Tradition=2",
+    "/Spells.aspx?Tradition=3",
+    "/Spells.aspx?Tradition=4",
+    "/Spells.aspx?Focus=true",
+    "/Rituals.aspx"
+  ],
+  "Mythic": [
+    "/Rules.aspx?ID=3320",
+    "/MythicCallings.aspx",
+    "/MythicFeats.aspx",
+    "/MythicDestinies.aspx",
+    "/MythicSpells.aspx",
+    "/MythicRituals.aspx"
+  ],
+  "About the Archives": [
+    "/ContactUs.aspx",
+    "/Contributors.aspx",
+    "/Licenses.aspx"
+  ]
+}

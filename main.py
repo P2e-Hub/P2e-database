@@ -1,6 +1,5 @@
 from json import load
 from os import path
-from categories_scraper import get_categories_json
 from selenium import webdriver
 
 base_url = "https://2e.aonprd.com"
@@ -15,8 +14,8 @@ def main():
     options.add_argument("-headless")
     driver = webdriver.Firefox(options=options)
 
-    if not path.isfile("categories.json"):
-        get_categories_json(base_url=base_url)
+    # if not path.isfile("categories.json"):
+    #     get_categories_json(base_url=base_url)
 
     json_file = open("categories.json")
     categories = load(json_file)

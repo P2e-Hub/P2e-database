@@ -26,7 +26,7 @@ class TraitsScraper(BaseScraper):
 
                 result["traits"].append(trait)
 
-                print(result)
+                print(trait)
 
     def get_trait_description(self, url: str) -> str:
         base_url = "https://2e.aonprd.com"

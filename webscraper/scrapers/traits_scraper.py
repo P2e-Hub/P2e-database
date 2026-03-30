@@ -1,19 +1,21 @@
 from .base_scraper import BaseScraper
 from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
+from typing import override
 
 
 class TraitsScraper(BaseScraper):
-    def parse(self, soup: BeautifulSoup) -> dict:
-        result = {"traits": []}
+    @override
+    def parse(self, soup: BeautifulSoup) -> list[dict[str, str]]:
+        result: list[dict[str, str]] = []
 
         main = soup.find(id='main')
         if not isinstance(main, Tag):
-            return result
+            raise ValueError("Element 'main' not found")
 
         traits = main.contents[9]
         if not isinstance(traits, Tag):
-            return result
+            raise ValueError("Traits block not valid")
 
         traits_types = traits.find_all(name="h2", class_="title")
 
@@ -48,13 +50,13 @@ class TraitsScraper(BaseScraper):
 
                 description = self.get_trait_description(href)
                 trait = {
-                    "name": current.string,
-                    "type": traits_type.string,
+                    "name": current.get_text(strip=True),
+                    "type": traits_type.get_text(strip=True),
                     "desc": description
                 }
 
                 print(trait)
-                result["traits"].append(trait)
+                result.append(trait)
 
                 current = current.next_sibling
 

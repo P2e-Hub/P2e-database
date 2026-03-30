@@ -1,3 +1,4 @@
+from fetchers.base_fetcher import BaseFetcher
 from fetchers.selenium_fetcher import SeleniumFetcher
 from fetchers.requests_fetcher import RequestsFetcher
 from abc import ABC, abstractmethod
@@ -5,7 +6,10 @@ from bs4 import BeautifulSoup
 
 
 class BaseScraper(ABC):
-    def scrape(self, url: str) -> dict:
+    def __init__(self):
+        self.fetcher: BaseFetcher
+
+    def scrape(self, url: str) -> list[dict[str, str]]:
         html = ''
         actions = self.get_actions()
 
@@ -22,5 +26,5 @@ class BaseScraper(ABC):
         return None
 
     @abstractmethod
-    def parse(self, soup: BeautifulSoup) -> dict:
+    def parse(self, soup: BeautifulSoup) -> list[dict[str, str]]:
         raise NotImplementedError

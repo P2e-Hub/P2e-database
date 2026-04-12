@@ -1,71 +1,97 @@
 from .base_scraper import BaseScraper
 from bs4 import BeautifulSoup, Tag
-from bs4.element import NavigableString
+from bs4.element import NavigableString, PageElement
 from typing import override
+from orm.trait import Trait
 
 
-class TraitsScraper(BaseScraper):
+class TraitsScraper(BaseScraper[Trait]):
     @override
-    def parse(self, soup: BeautifulSoup) -> list[dict[str, str]]:
-        result: list[dict[str, str]] = []
+    def parse(self, soup: BeautifulSoup) -> list[Trait]:
+        main: Tag = self.__get_main_element(soup=soup)
+        traits_container: Tag = self.__get_traits_container(main=main)
+        trait_type_headers: list[Tag] = self.__get_trait_type_headers(traits_containers=traits_container)
 
+        result: list[Trait] = []
+
+        for header in trait_type_headers:
+            result.extend(self.__parse_traits_from_header(header=header))
+
+        return result
+
+    def __get_main_element(self, soup: BeautifulSoup) -> Tag:
         main = soup.find(id='main')
         if not isinstance(main, Tag):
             raise ValueError("Element 'main' not found")
 
-        traits = main.contents[9]
-        if not isinstance(traits, Tag):
+        return main
+
+    def __get_traits_container(self, main: Tag) -> Tag:
+        traits_container = main.contents[9]
+        if not isinstance(traits_container, Tag):
             raise ValueError("Traits block not valid")
 
-        traits_types = traits.find_all(name="h2", class_="title")
+        return traits_container
 
-        for traits_type in traits_types:
-            current = traits_type
+    def __get_trait_type_headers(self, traits_containers: Tag) -> list[Tag]:
+        return traits_containers.find_all(name="h2", class_="title")
 
-            while current is not None:
-                if isinstance(current, Tag) and current.name == 'br':
-                    break
+    def __parse_traits_from_header(self, header: Tag) -> list[Trait]:
+        traits: list[Trait] = []
+        trait_type: str = header.get_text(strip=True)
+        current_type: PageElement | None = header.next_sibling
 
-                if isinstance(current, NavigableString):
-                    current = current.next_sibling
-                    continue
+        while current_type is not None:
+            if self.__is_section_break(node=current_type):
+                break
 
-                if not isinstance(current, Tag):
-                    current = current.next_sibling
-                    continue
+            tag = self.__get_valid_trait_tag(node=current_type)
+            if tag is None:
+                current_type = current_type.next_sibling
+                continue
 
-                if current.get_text(strip=True) == traits_type.get_text(strip=True):
-                    current = current.next_sibling
-                    continue
+            href = self.__get_link_href(tag=tag)
+            if href is None:
+                current_type = current_type.next_sibling
+                continue
 
-                link = current.find('a')
-                if link is None:
-                    current = current.next_sibling
-                    continue
+            description = self.__get_trait_description(url=href)
+            trait = Trait(
+                name=current_type.get_text(strip=True),
+                trait_type=trait_type,
+                description=description
+            )
 
-                href = link.get('href')
-                if not href or not isinstance(href, str):
-                    current = current.next_sibling
-                    continue
+            print(trait)
+            traits.append(trait)
 
-                description = self.get_trait_description(href)
-                trait = {
-                    "name": current.get_text(strip=True),
-                    "type": traits_type.get_text(strip=True),
-                    "desc": description
-                }
+            current_type = current_type.next_sibling
 
-                print(trait)
-                result.append(trait)
+        return traits
 
-                current = current.next_sibling
+    def __is_section_break(self, node: PageElement) -> bool:
+        return isinstance(node, Tag) and node.name == 'br'
 
-        return result
+    def __get_valid_trait_tag(self, node: PageElement) -> Tag | None:
+        if isinstance(node, NavigableString) or not isinstance(node, Tag):
+            return None
 
-    def get_trait_description(self, url: str) -> str:
+        return node
+
+    def __get_link_href(self, tag: Tag) -> str | None:
+        link = tag.find('a')
+        if not isinstance(link, Tag):
+            return None
+
+        href = link.get(key='href')
+        if not isinstance(href, str) or not href:
+            return None
+
+        return href
+
+    def __get_trait_description(self, url: str) -> str:
         base_url = "https://2e.aonprd.com"
-        url = f"{base_url}/{url}"
-        html = self.fetcher.fetch(url=url)
+        html = self.fetcher.fetch(url=f"{base_url}/{url}")
         soup = BeautifulSoup(html, 'html.parser')
 
         external_link = soup.find(class_="external-link")
@@ -80,6 +106,11 @@ class TraitsScraper(BaseScraper):
         if description_section is None:
             return ""
 
+        description: str = self.__parse_description_section(description_section=description_section)
+
+        return description
+
+    def __parse_description_section(self, description_section: PageElement | None) -> str:
         parts: list[str] = []
 
         while description_section is not None:

@@ -1,15 +1,18 @@
+from typing import Generic, TypeVar
 from fetchers.base_fetcher import BaseFetcher
 from fetchers.selenium_fetcher import SeleniumFetcher
 from fetchers.requests_fetcher import RequestsFetcher
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 
+T = TypeVar(name="T")
 
-class BaseScraper(ABC):
+
+class BaseScraper(ABC, Generic[T]):
     def __init__(self):
         self.fetcher: BaseFetcher
 
-    def scrape(self, url: str) -> list[dict[str, str]]:
+    def scrape(self, url: str) -> list[T]:
         html = ''
         actions = self.get_actions()
 
@@ -18,7 +21,7 @@ class BaseScraper(ABC):
         else:
             self.fetcher = SeleniumFetcher()
 
-        html = self.fetcher.fetch(url=url, actions=actions)
+        html: str = self.fetcher.fetch(url=url, actions=actions)
 
         return self.parse(BeautifulSoup(html, 'html.parser'))
 
@@ -26,5 +29,5 @@ class BaseScraper(ABC):
         return None
 
     @abstractmethod
-    def parse(self, soup: BeautifulSoup) -> list[dict[str, str]]:
+    def parse(self, soup: BeautifulSoup) -> list[T]:
         raise NotImplementedError

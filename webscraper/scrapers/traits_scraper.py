@@ -1,3 +1,4 @@
+from fetchers.requests_fetcher import RequestsFetcher
 from .base_scraper import BaseScraper
 from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString, PageElement
@@ -6,6 +7,9 @@ from orm.trait import Trait
 
 
 class TraitsScraper(BaseScraper[Trait]):
+    def __init__(self):
+        super().__init__(baseFetcher=RequestsFetcher())
+
     @override
     def parse(self, soup: BeautifulSoup) -> list[Trait]:
         main: Tag = self.__get_main_element(soup=soup)

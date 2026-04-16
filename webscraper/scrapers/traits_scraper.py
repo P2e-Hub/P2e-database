@@ -1,3 +1,4 @@
+from fetchers.base_fetcher import BaseFetcher
 from fetchers.requests_fetcher import RequestsFetcher
 from .base_scraper import BaseScraper
 from bs4 import BeautifulSoup, Tag
@@ -7,8 +8,8 @@ from orm.trait import Trait
 
 
 class TraitsScraper(BaseScraper[Trait]):
-    def __init__(self):
-        super().__init__(baseFetcher=RequestsFetcher())
+    def __init__(self, baseFetcher: BaseFetcher | None = None) -> None:
+        super().__init__(baseFetcher=baseFetcher or RequestsFetcher())
 
     @override
     def parse(self, soup: BeautifulSoup) -> list[Trait]:
@@ -31,6 +32,9 @@ class TraitsScraper(BaseScraper[Trait]):
         return main
 
     def __get_traits_container(self, main: Tag) -> Tag:
+        if len(main.contents) < 10:
+            raise IndexError("Number of contents is less then 10")
+
         traits_container = main.contents[9]
         if not isinstance(traits_container, Tag):
             raise ValueError("Traits block not valid")

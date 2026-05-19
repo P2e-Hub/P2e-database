@@ -1,0 +1,756 @@
+// ============================================================
+//  PATHFINDER 2E — Schema de Banco de Dados (DBML)
+//  Baseado em: https://2e.aonprd.com
+//  Compatível com: dbdiagram.io
+// ============================================================
+
+// ─────────────────────────────────────────
+//  REFERÊNCIA / METADADOS
+// ─────────────────────────────────────────
+
+Table sources {
+  id          int         [pk, increment]
+  name        varchar(255) [not null]
+  category    varchar(100) [note: "RPG, Adventure Path, Society, Lost Omens, Legacy, etc."]
+  page        int
+  version     varchar(20)  [note: "ex: 2.0, 1.0"]
+  is_legacy   boolean      [default: false]
+  created_at  timestamp    [default: `now()`]
+}
+
+Table traits {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  description text
+  category    varchar(100) [note: "Ancestry, Class, Equipment, Spell, Creature, General, etc."]
+  source_id   int
+}
+
+Ref: traits.source_id > sources.id
+
+// ─────────────────────────────────────────
+//  ANCESTRAIS & HERANÇAS
+// ─────────────────────────────────────────
+
+Table ancestries {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  rarity          varchar(20)  [note: "Common, Uncommon, Rare"]
+  hit_points      int          [note: "HP base da ancestralidade"]
+  size            varchar(20)  [note: "Small, Medium, Large"]
+  speed           int          [note: "em metros ou pés"]
+  attribute_boosts    varchar(255) [note: "ex: Str ou Dex, livre"]
+  attribute_flaws     varchar(255)
+  languages_desc  text
+  description     text
+  source_id       int
+}
+
+Ref: ancestries.source_id > sources.id
+
+Table ancestry_features {
+  id          int         [pk, increment]
+  ancestry_id int         [not null]
+  name        varchar(100) [not null]
+  level       int          [default: 1]
+  description text
+}
+
+Ref: ancestry_features.ancestry_id > ancestries.id
+
+Table heritages {
+  id          int         [pk, increment]
+  ancestry_id int
+  name        varchar(100) [not null]
+  is_versatile boolean    [default: false, note: "Heritage versátil pode ser de qualquer ancestralidade"]
+  description text
+  source_id   int
+}
+
+Ref: heritages.ancestry_id > ancestries.id
+Ref: heritages.source_id   > sources.id
+
+// ─────────────────────────────────────────
+//  BACKGROUNDS
+// ─────────────────────────────────────────
+
+Table backgrounds {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  rarity          varchar(20)
+  description     text
+  attribute_boosts varchar(255)
+  source_id       int
+}
+
+Ref: backgrounds.source_id > sources.id
+
+Table background_skills {
+  id            int [pk, increment]
+  background_id int [not null]
+  skill_id      int [not null]
+  is_lore       boolean [default: false]
+  lore_topic    varchar(100)
+}
+
+// ─────────────────────────────────────────
+//  CLASSES
+// ─────────────────────────────────────────
+
+Table classes {
+  id                   int         [pk, increment]
+  name                 varchar(100) [not null, unique]
+  rarity               varchar(20)  [note: "Common, Uncommon, Rare"]
+  key_attribute        varchar(100) [note: "ex: Strength or Dexterity"]
+  hit_points           int          [note: "HP por nível (sem Con)"]
+  tradition            varchar(50)  [note: "Arcane, Divine, Occult, Primal — NULL se não spellcaster"]
+  perception_proficiency varchar(20) [note: "Trained, Expert, Master, Legendary"]
+  fortitude_proficiency  varchar(20)
+  reflex_proficiency     varchar(20)
+  will_proficiency       varchar(20)
+  description          text
+  source_id            int
+}
+
+Ref: classes.source_id > sources.id
+
+Table class_features {
+  id          int         [pk, increment]
+  class_id    int         [not null]
+  name        varchar(100) [not null]
+  level       int          [not null]
+  description text
+}
+
+Ref: class_features.class_id > classes.id
+
+Table class_subclasses {
+  id          int         [pk, increment]
+  class_id    int         [not null]
+  name        varchar(100) [not null]
+  subclass_type varchar(100) [note: "Instinct, Muse, Doctrine, Research Field, Bloodline, etc."]
+  description text
+  source_id   int
+}
+
+Ref: class_subclasses.class_id  > classes.id
+Ref: class_subclasses.source_id > sources.id
+
+// ─────────────────────────────────────────
+//  SKILLS
+// ─────────────────────────────────────────
+
+Table skills {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  attribute       varchar(20)  [note: "Str, Dex, Con, Int, Wis, Cha"]
+  description     text
+  untrained_uses  text
+  trained_uses    text
+}
+
+Table skill_actions {
+  id          int         [pk, increment]
+  skill_id    int         [not null]
+  name        varchar(100) [not null]
+  proficiency varchar(20)  [note: "Untrained, Trained, Expert, Master, Legendary"]
+  description text
+}
+
+Ref: skill_actions.skill_id > skills.id
+Ref: background_skills.skill_id > skills.id
+
+// ─────────────────────────────────────────
+//  FEATS (TALENTOS)
+// ─────────────────────────────────────────
+
+Table feats {
+  id              int         [pk, increment]
+  name            varchar(255) [not null]
+  level           int          [not null]
+  rarity          varchar(20)
+  feat_type       varchar(50)  [note: "Class, Ancestry, General, Skill, Archetype, Mythic"]
+  class_id        int          [note: "NULL se não for class feat"]
+  ancestry_id     int          [note: "NULL se não for ancestry feat"]
+  archetype_id    int          [note: "NULL se não for archetype feat"]
+  prerequisites   text
+  frequency       varchar(100) [note: "ex: Once per round, Once per day"]
+  trigger         varchar(255)
+  requirements    text
+  description     text
+  special         text
+  source_id       int
+}
+
+Ref: feats.class_id    > classes.id
+Ref: feats.ancestry_id > ancestries.id
+Ref: feats.source_id   > sources.id
+
+Table feat_traits {
+  feat_id  int [not null]
+  trait_id int [not null]
+  indexes {
+    (feat_id, trait_id) [pk]
+  }
+}
+
+Ref: feat_traits.feat_id  > feats.id
+Ref: feat_traits.trait_id > traits.id
+
+// ─────────────────────────────────────────
+//  ARCHETYPES
+// ─────────────────────────────────────────
+
+Table archetypes {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  archetype_type  varchar(50)  [note: "Class, Multiclass, Prestige, Dual-Class"]
+  class_id        int          [note: "Vinculado a uma classe no caso de multiclass"]
+  dedication_feat_id int
+  prerequisites   text
+  description     text
+  source_id       int
+}
+
+Ref: archetypes.class_id           > classes.id
+Ref: archetypes.dedication_feat_id > feats.id
+Ref: archetypes.source_id          > sources.id
+Ref: feats.archetype_id            > archetypes.id
+
+// ─────────────────────────────────────────
+//  SPELLS / FEITIÇOS
+// ─────────────────────────────────────────
+
+Table spells {
+  id              int         [pk, increment]
+  name            varchar(255) [not null]
+  rank            int          [note: "1–10 (substituiu 'level' no Remaster)"]
+  spell_type      varchar(20)  [note: "Spell, Focus, Ritual, Cantrip"]
+  is_mythic       boolean      [default: false]
+  actions         varchar(50)  [note: "1, 2, 3, Free, Reaction, 1 min, etc."]
+  trigger         varchar(255)
+  range           varchar(100)
+  area            varchar(100)
+  targets         varchar(100)
+  duration        varchar(100)
+  saving_throw    varchar(50)  [note: "Fortitude, Reflex, Will, NULL"]
+  description     text
+  heightened_desc text         [note: "Efeitos de heighten por rank"]
+  source_id       int
+}
+
+Ref: spells.source_id > sources.id
+
+Table spell_traditions {
+  spell_id     int         [not null]
+  tradition    varchar(20) [not null, note: "Arcane, Divine, Occult, Primal, Elemental"]
+  indexes {
+    (spell_id, tradition) [pk]
+  }
+}
+
+Ref: spell_traditions.spell_id > spells.id
+
+Table spell_traits {
+  spell_id int [not null]
+  trait_id int [not null]
+  indexes {
+    (spell_id, trait_id) [pk]
+  }
+}
+
+Ref: spell_traits.spell_id > spells.id
+Ref: spell_traits.trait_id > traits.id
+
+Table spell_heighten {
+  id          int         [pk, increment]
+  spell_id    int         [not null]
+  rank        int         [note: "Rank no qual o heighten ocorre (ex: +1, ou rank fixo)"]
+  heighten_type varchar(10) [note: "fixed, plus"]
+  description text
+}
+
+Ref: spell_heighten.spell_id > spells.id
+
+// ─────────────────────────────────────────
+//  EQUIPMENT / EQUIPAMENTO
+// ─────────────────────────────────────────
+
+Table equipment {
+  id              int          [pk, increment]
+  name            varchar(255) [not null]
+  category        varchar(100) [note: "Adventuring Gear, Alchemical, Armor, Weapon, Worn, Held, Shield, Rune, etc."]
+  item_level      int
+  rarity          varchar(20)
+  price_gp        decimal(10,2)
+  bulk            varchar(10)  [note: "L, 1, 2, —"]
+  hands           varchar(10)
+  description     text
+  activate        text         [note: "Descrição de ativação de item mágico"]
+  usage           varchar(100)
+  source_id       int
+}
+
+Ref: equipment.source_id > sources.id
+
+Table equipment_traits {
+  equipment_id int [not null]
+  trait_id     int [not null]
+  indexes {
+    (equipment_id, trait_id) [pk]
+  }
+}
+
+Ref: equipment_traits.equipment_id > equipment.id
+Ref: equipment_traits.trait_id     > traits.id
+
+Table weapons {
+  id              int         [pk, increment]
+  equipment_id    int         [not null, unique]
+  weapon_type     varchar(20) [note: "Simple, Martial, Advanced, Unarmed"]
+  weapon_category varchar(20) [note: "Melee, Ranged"]
+  weapon_group    varchar(50) [note: "Axe, Bow, Brawling, Club, Dart, Flail, Hammer, Knife, Pick, Polearm, Shield, Sling, Spear, Sword"]
+  damage_dice     varchar(10) [note: "ex: 1d8"]
+  damage_type     varchar(20) [note: "B, P, S ou combinação"]
+  range           int         [note: "em pés, NULL se melee"]
+  reload          varchar(10)
+  critical_spec   text
+}
+
+Ref: weapons.equipment_id > equipment.id
+
+Table armor {
+  id              int         [pk, increment]
+  equipment_id    int         [not null, unique]
+  armor_category  varchar(20) [note: "Unarmored, Light, Medium, Heavy"]
+  armor_group     varchar(50) [note: "Chain, Composite, Leather, Plate, Skeletal, Splint, Leather, Wood"]
+  ac_bonus        int
+  dex_cap         int
+  check_penalty   int
+  speed_penalty   int
+  strength_req    int
+  spec_effect     text
+}
+
+Ref: armor.equipment_id > equipment.id
+
+Table shields {
+  id              int         [pk, increment]
+  equipment_id    int         [not null, unique]
+  ac_bonus        int
+  speed_penalty   int
+  hardness        int
+  hit_points      int
+  broken_threshold int
+}
+
+Ref: shields.equipment_id > equipment.id
+
+Table runes {
+  id              int         [pk, increment]
+  equipment_id    int         [not null, unique]
+  rune_type       varchar(20) [note: "Fundamental, Property"]
+  applies_to      varchar(20) [note: "Weapon, Armor"]
+  potency_bonus   int
+  description     text
+}
+
+Ref: runes.equipment_id > equipment.id
+
+// ─────────────────────────────────────────
+//  CREATURES / CRIATURAS
+// ─────────────────────────────────────────
+
+Table creature_families {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  description text
+  source_id   int
+}
+
+Ref: creature_families.source_id > sources.id
+
+Table creatures {
+  id              int         [pk, increment]
+  name            varchar(255) [not null]
+  level           int          [not null]
+  rarity          varchar(20)
+  alignment       varchar(5)   [note: "LG, NG, CG, LN, N, CN, LE, NE, CE — NULL no Remaster"]
+  size            varchar(20)
+  creature_type   varchar(50)  [note: "Aberration, Animal, Beast, Construct, Dragon, Elemental, etc."]
+  family_id       int
+  // Atributos
+  str             int
+  dex             int
+  con             int
+  int_            int          [note: "int é palavra reservada em SQL, usando int_"]
+  wis             int
+  cha             int
+  // Defesas
+  ac              int
+  hp              int
+  fortitude       int
+  reflex          int
+  will            int
+  // Sentidos & Movimento
+  perception      int
+  speed           int
+  other_speeds    varchar(255) [note: "ex: fly 30, swim 25"]
+  senses          varchar(255)
+  // Ataques
+  description     text
+  recall_knowledge text
+  source_id       int
+}
+
+Ref: creatures.family_id > creature_families.id
+Ref: creatures.source_id > sources.id
+
+Table creature_traits {
+  creature_id int [not null]
+  trait_id    int [not null]
+  indexes {
+    (creature_id, trait_id) [pk]
+  }
+}
+
+Ref: creature_traits.creature_id > creatures.id
+Ref: creature_traits.trait_id    > traits.id
+
+Table creature_abilities {
+  id              int         [pk, increment]
+  creature_id     int         [not null]
+  ability_type    varchar(20) [note: "Passive, Active, Attack, Free, Reaction"]
+  name            varchar(100) [not null]
+  actions         varchar(50)
+  trigger         varchar(255)
+  description     text
+}
+
+Ref: creature_abilities.creature_id > creatures.id
+
+Table creature_spells {
+  id          int [pk, increment]
+  creature_id int [not null]
+  spell_id    int [not null]
+  spell_level int
+  frequency   varchar(100) [note: "At will, 3/day, etc."]
+}
+
+Ref: creature_spells.creature_id > creatures.id
+Ref: creature_spells.spell_id    > spells.id
+
+// ─────────────────────────────────────────
+//  CONDITIONS / CONDIÇÕES
+// ─────────────────────────────────────────
+
+Table conditions {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  has_value   boolean      [default: false, note: "Frightened 1, Stunned 2, etc."]
+  description text
+  source_id   int
+}
+
+Ref: conditions.source_id > sources.id
+
+Table condition_ends {
+  condition_id    int [not null]
+  ends_condition_id int [not null, note: "Condição que esta encerra ou remove"]
+  indexes {
+    (condition_id, ends_condition_id) [pk]
+  }
+}
+
+Ref: condition_ends.condition_id      > conditions.id
+Ref: condition_ends.ends_condition_id > conditions.id
+
+// ─────────────────────────────────────────
+//  ACTIONS / AÇÕES
+// ─────────────────────────────────────────
+
+Table actions {
+  id          int         [pk, increment]
+  name        varchar(100) [not null]
+  action_cost varchar(20)  [note: "Free, Reaction, 1, 2, 3, 1 min, etc."]
+  action_type varchar(20)  [note: "Basic, Skill, Class, Creature, Exploration, Downtime"]
+  trigger     varchar(255)
+  requirements text
+  description text
+  source_id   int
+}
+
+Ref: actions.source_id > sources.id
+
+Table action_traits {
+  action_id int [not null]
+  trait_id  int [not null]
+  indexes {
+    (action_id, trait_id) [pk]
+  }
+}
+
+Ref: action_traits.action_id > actions.id
+Ref: action_traits.trait_id  > traits.id
+
+// ─────────────────────────────────────────
+//  HAZARDS / PERIGOS
+// ─────────────────────────────────────────
+
+Table hazards {
+  id              int         [pk, increment]
+  name            varchar(255) [not null]
+  level           int
+  rarity          varchar(20)
+  hazard_type     varchar(20)  [note: "Trap, Environmental, Haunt"]
+  complexity      varchar(20)  [note: "Simple, Complex"]
+  stealth_dc      int
+  stealth_bonus   int
+  disable_dc      int
+  disable_skill_id int
+  disable_description text
+  ac              int
+  hp              int
+  fortitude       int
+  reflex          int
+  hardness        int
+  description     text
+  reset           text
+  source_id       int
+}
+
+Ref: hazards.disable_skill_id > skills.id
+Ref: hazards.source_id        > sources.id
+
+Table hazard_traits {
+  hazard_id int [not null]
+  trait_id  int [not null]
+  indexes {
+    (hazard_id, trait_id) [pk]
+  }
+}
+
+Ref: hazard_traits.hazard_id > hazards.id
+Ref: hazard_traits.trait_id  > traits.id
+
+Table hazard_actions {
+  id          int         [pk, increment]
+  hazard_id   int         [not null]
+  name        varchar(100)
+  action_cost varchar(20)
+  trigger     varchar(255)
+  description text
+}
+
+Ref: hazard_actions.hazard_id > hazards.id
+
+// ─────────────────────────────────────────
+//  AFFLICTIONS / AFLIÇÕES
+// ─────────────────────────────────────────
+
+Table afflictions {
+  id              int         [pk, increment]
+  name            varchar(255) [not null]
+  affliction_type varchar(20)  [note: "Disease, Poison, Curse"]
+  level           int
+  max_duration    varchar(100)
+  onset           varchar(100)
+  saving_throw    varchar(20)
+  save_dc         int
+  description     text
+  source_id       int
+}
+
+Ref: afflictions.source_id > sources.id
+
+Table affliction_stages {
+  id              int         [pk, increment]
+  affliction_id   int         [not null]
+  stage_number    int
+  description     text
+  duration        varchar(100)
+}
+
+Ref: affliction_stages.affliction_id > afflictions.id
+
+Table affliction_traits {
+  affliction_id int [not null]
+  trait_id      int [not null]
+  indexes {
+    (affliction_id, trait_id) [pk]
+  }
+}
+
+Ref: affliction_traits.affliction_id > afflictions.id
+Ref: affliction_traits.trait_id      > traits.id
+
+// ─────────────────────────────────────────
+//  SETTING: DEITIES, LANGUAGES, PLANES
+// ─────────────────────────────────────────
+
+Table deities {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  alignment       varchar(5)
+  deity_category  varchar(50)  [note: "God, Demigod, Pantheon, Philosophy, etc."]
+  domains         varchar(255)
+  favored_weapons varchar(255)
+  description     text
+  source_id       int
+}
+
+Ref: deities.source_id > sources.id
+
+Table domains {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  description text
+  focus_spell_id int
+}
+
+Ref: domains.focus_spell_id > spells.id
+
+Table deity_domains {
+  deity_id    int [not null]
+  domain_id   int [not null]
+  is_alternate boolean [default: false]
+  indexes {
+    (deity_id, domain_id) [pk]
+  }
+}
+
+Ref: deity_domains.deity_id  > deities.id
+Ref: deity_domains.domain_id > domains.id
+
+Table languages {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  language_type   varchar(20)  [note: "Common, Uncommon, Rare, Secret"]
+  regions         varchar(255)
+  speakers        varchar(255)
+  description     text
+  source_id       int
+}
+
+Ref: languages.source_id > sources.id
+
+Table planes {
+  id              int         [pk, increment]
+  name            varchar(100) [not null, unique]
+  plane_category  varchar(50)  [note: "Inner, Outer, Transitive, Dimension"]
+  alignment       varchar(5)
+  description     text
+  source_id       int
+}
+
+Ref: planes.source_id > sources.id
+
+// ─────────────────────────────────────────
+//  MYTHIC
+// ─────────────────────────────────────────
+
+Table mythic_callings {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  description text
+  source_id   int
+}
+
+Ref: mythic_callings.source_id > sources.id
+
+Table mythic_destinies {
+  id          int         [pk, increment]
+  name        varchar(100) [not null, unique]
+  description text
+  source_id   int
+}
+
+Ref: mythic_destinies.source_id > sources.id
+
+// ─────────────────────────────────────────
+//  ANIMAL COMPANIONS & FAMILIARS
+// ─────────────────────────────────────────
+
+Table animal_companions {
+  id              int         [pk, increment]
+  name            varchar(100) [not null]
+  companion_type  varchar(20)  [note: "Animal, Construct, Undead"]
+  size            varchar(20)
+  attack_name     varchar(100)
+  damage_dice     varchar(20)
+  damage_type     varchar(20)
+  str             int
+  dex             int
+  con             int
+  int_            int
+  wis             int
+  cha             int
+  hp_formula      varchar(50)
+  ac              int
+  description     text
+  source_id       int
+}
+
+Ref: animal_companions.source_id > sources.id
+
+Table familiar_abilities {
+  id          int         [pk, increment]
+  name        varchar(100) [not null]
+  ability_type varchar(20) [note: "Master, Familiar"]
+  description text
+  source_id   int
+}
+
+Ref: familiar_abilities.source_id > sources.id
+
+// ─────────────────────────────────────────
+//  CROSS-REFERENCES DIVERSAS
+// ─────────────────────────────────────────
+
+// Classes que podem usar determinadas tradições mágicas
+Table class_spellcasting {
+  id              int         [pk, increment]
+  class_id        int         [not null]
+  tradition       varchar(20)  [note: "Arcane, Divine, Occult, Primal"]
+  casting_type    varchar(20)  [note: "Prepared, Spontaneous, Focus-only"]
+  spell_ability   varchar(10)  [note: "Int, Wis, Cha"]
+}
+
+Ref: class_spellcasting.class_id > classes.id
+
+// Armas favorecidas de deidades (relação com equipment)
+Table deity_favored_weapons {
+  deity_id     int [not null]
+  equipment_id int [not null]
+  indexes {
+    (deity_id, equipment_id) [pk]
+  }
+}
+
+Ref: deity_favored_weapons.deity_id     > deities.id
+Ref: deity_favored_weapons.equipment_id > equipment.id
+
+// Pré-requisitos entre feats (autoref)
+Table feat_prerequisites {
+  feat_id         int [not null, note: "Feat que tem pré-requisito"]
+  required_feat_id int [not null, note: "Feat exigido"]
+  indexes {
+    (feat_id, required_feat_id) [pk]
+  }
+}
+
+Ref: feat_prerequisites.feat_id          > feats.id
+Ref: feat_prerequisites.required_feat_id > feats.id
+
+// Spells que concedem condições
+Table spell_conditions {
+  spell_id     int [not null]
+  condition_id int [not null]
+  on_result    varchar(20) [note: "Success, Failure, Critical Success, Critical Failure"]
+  indexes {
+    (spell_id, condition_id, on_result) [pk]
+  }
+}
+
+Ref: spell_conditions.spell_id     > spells.id
+Ref: spell_conditions.condition_id > conditions.id

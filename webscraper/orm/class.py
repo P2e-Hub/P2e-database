@@ -1,18 +1,20 @@
-from sqlalchemy import String
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 
-class InitialProficiency(Base):
-    __table_args__: str = "initial_proficiency"
+class Classes(Base):
+    __table_args__: str = "class"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    perception: Mapped[str] = mapped_column(String(1))
-    fortitude: Mapped[str] = mapped_column(String(1))
-    reflex: Mapped[str] = mapped_column(String(1))
-    will: Mapped[str] = mapped_column(String(1))
-    unarmed_attacks: Mapped[str] = mapped_column(String(1))
-    simple_weapons: Mapped[str] = mapped_column(String(1))
-    unarmored_defense: Mapped[str] = mapped_column(String(1))
-    light_armor: Mapped[str] = mapped_column(String(1))
-    medium_armor: Mapped[str] = mapped_column(String(1))
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    rarity: Mapped[str] = mapped_column(String(20))
+    key_attribute: Mapped[str] = mapped_column(String(100))
+    hit_points: Mapped[int] = mapped_column()
+    tradition: Mapped[str] = mapped_column(String(50))
+    perception_proficiency: Mapped[str] = mapped_column(String(20))
+    fortitude_proficiency: Mapped[str] = mapped_column(String(20))
+    reflex_proficiency: Mapped[str] = mapped_column(String(20))
+    will_proficiency: Mapped[str] = mapped_column(String(20))
+    description: Mapped[str] = mapped_column(Text)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"))

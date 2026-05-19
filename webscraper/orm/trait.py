@@ -1,5 +1,5 @@
 from typing import override
-from sqlalchemy import String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import (
     Mapped,
     mapped_column
@@ -13,7 +13,8 @@ class Trait(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(20))
     category: Mapped[str] = mapped_column(String(20))
-    description: Mapped[Text | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"))
 
     @override
     def __str__(self) -> str:

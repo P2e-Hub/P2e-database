@@ -1,5 +1,5 @@
-from fetchers.requests_fetcher import RequestsFetcher
-from scrapers.traits_description_parser import TraitsDescriptionParser
+from ports.fetchers.requests_fetcher import RequestsFetcher
+from ports.parsers.traits_description_parser import TraitsDescriptionParser
 
 from .parser import Parser
 from bs4 import BeautifulSoup, Tag

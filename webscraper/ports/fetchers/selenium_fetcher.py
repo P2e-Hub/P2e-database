@@ -1,5 +1,5 @@
 from typing import override
-from fetchers.base_fetcher import BaseFetcher
+from ports.fetchers.base_fetcher import BaseFetcher
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -7,7 +7,7 @@ from selenium.webdriver.support.expected_conditions import (
     presence_of_element_located
 )
 from selenium.webdriver.remote.webdriver import WebDriver
-from scrapers.actions import BrowserActions
+from ports.fetchers.actions import BrowserActions
 
 class SeleniumFetcher(BaseFetcher):
     driver: WebDriver | None = None

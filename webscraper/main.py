@@ -1,11 +1,9 @@
-from scrapers.traits_parser import TraitsParser
 from sqlalchemy import create_engine
 from orm.trait import Base
 base_url = "https://2e.aonprd.com"
 
 def main():
-    traits = TraitsParser()
-    # traits.parse(url="https://2e.aonprd.com/Traits.aspx")
+    pass
     # engine = create_engine(
     #     "postgresql+psycopg://postgres:example@100.75.243.92:5432/pathfinder-2e"
     # )

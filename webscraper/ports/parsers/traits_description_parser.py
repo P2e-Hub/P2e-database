@@ -3,7 +3,7 @@ from typing import override
 from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString, PageElement
 
-from scrapers.parser import Parser
+from ports.parsers.parser import Parser
 
 
 class TraitsDescriptionParser(Parser[str]):

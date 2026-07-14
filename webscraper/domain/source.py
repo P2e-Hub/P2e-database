@@ -6,8 +6,8 @@ from datetime import datetime
 class Source:
     id: int
     name: str
-    category: str
-    page: int
-    version: str
+    category: str | None
+    page: int | None
+    version: str | None
     is_legacy: bool
-    created_at: datetime
+    created_at: datetime | None
